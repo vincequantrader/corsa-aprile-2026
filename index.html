@@ -49,6 +49,10 @@
   .status-value { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); line-height: 1; }
   .status-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 1px; color: #83a64b; text-transform: uppercase; margin-top: 4px; }
   .status-note { margin-top: 12px; background: #0d0d0d; border: 1px solid #242424; border-radius: 8px; padding: 12px; font-size: 12px; color: #a5a5a5; line-height: 1.5; }
+  .status-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .action-btn { min-height: 42px; padding: 10px 12px; border-radius: 6px; border: 1px solid #2d2d2d; background: #111; color: var(--white); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+  .action-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--black); font-weight: 700; }
+  .action-btn.warn { border-color: #5a3300; color: #ffb38a; }
 
   .week-nav { display: flex; gap: 8px; padding: 20px var(--page-pad-right) 0 var(--page-pad); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-padding-left: var(--page-pad); }
   .week-nav::-webkit-scrollbar { display: none; }
@@ -63,6 +67,7 @@
   .session-card { background: var(--gray); border-radius: 8px; overflow: hidden; border: 1px solid #2a2a2a; transition: border-color 0.2s; }
   .session-card.gym { background: #131313; border-color: #1e1e1e; }
   .session-card.completed { border-color: #3a5a00 !important; }
+  .session-card.shifted { border-color: #404b15; }
   .session-header { padding: 14px 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; min-height: 72px; }
   .session-date { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; color: var(--white); min-width: 44px; text-align: center; }
   .session-date .ms { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; display: block; text-align: center; margin-top: 2px; }
@@ -96,6 +101,9 @@
   .mv { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); line-height: 1; }
   .ml { font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; margin-top: 2px; }
   .ntip { margin-top: 12px; background: #0d1a00; border: 1px solid #2a4000; border-radius: 4px; padding: 10px 12px; font-size: 12px; color: #a8d060; display: flex; gap: 8px; }
+  .session-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .session-action-btn { min-height: 38px; padding: 8px 10px; border-radius: 4px; border: 1px solid #333; background: #0d0d0d; color: var(--white); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+  .session-shift-note { margin-top: 10px; font-size: 11px; color: #9ebd5b; font-family: 'Space Mono', monospace; }
 
   .diary-section { padding: 20px var(--page-pad-right) 28px var(--page-pad); }
   .diary-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-bottom: 4px; }
@@ -216,6 +224,7 @@
   <div class="status-copy" id="statusCopy"></div>
   <div class="status-grid" id="statusGrid"></div>
   <div class="status-note" id="statusNote"></div>
+  <div class="status-actions" id="statusActions"></div>
 </div>
 
 <div class="tab-bar">
@@ -294,11 +303,11 @@
     <div class="week-section" id="week-1">
       <div class="week-header">6–12 APRILE · SETTIMANA 1 — COSTRUZIONE BASE</div>
 
-      <div class="session-card gym" onclick="toggleCard(this)">
+      <div class="session-card gym" id="sc-6" onclick="toggleCard(this)">
         <div class="session-header">
           <div class="session-date">6<span class="ms">APR</span></div>
           <div class="session-info"><div class="session-day">Lunedì</div><div class="session-title">Palestra — Personal Trainer</div></div>
-          <span class="badge b-gym">PALESTRA</span><span class="chevron">▼</span>
+          <span class="badge b-gym" id="b-6">PALESTRA</span><span class="chevron">▼</span>
         </div>
         <div class="session-detail">
           <div class="phase"><div class="phase-title ph-gym">💪 NOTA</div>
@@ -671,18 +680,26 @@
 
 <script>
   const KEY = 'runs_apr2026';
+  const SCHEDULE_KEY = 'runs_apr2026_schedule';
   const APRIL_PLAN = [
-    { date: '2026-04-03', label: 'Corsa di ingresso', type: 'run', distance: 4, phase: 'Ingresso' },
-    { date: '2026-04-05', label: 'Corsa baseline 5 km', type: 'run', distance: 5, phase: 'Ingresso' },
-    { date: '2026-04-06', label: 'Palestra', type: 'gym', distance: 0, phase: 'Base' },
-    { date: '2026-04-07', label: 'Corsa base post-palestra', type: 'run', distance: 5, phase: 'Base' },
-    { date: '2026-04-11', label: 'Variazioni 5 km', type: 'run', distance: 5, phase: 'Base' },
-    { date: '2026-04-14', label: 'Fartlek leggero', type: 'run', distance: 5, phase: 'Passo' },
-    { date: '2026-04-17', label: '5 km costanti', type: 'run', distance: 5, phase: 'Passo' },
-    { date: '2026-04-21', label: 'Recupero attivo', type: 'run', distance: 4.5, phase: 'Consolidamento' },
-    { date: '2026-04-24', label: 'Progressivo 5 km', type: 'run', distance: 5, phase: 'Consolidamento' },
-    { date: '2026-04-28', label: 'Corsa base consolidata', type: 'run', distance: 5, phase: 'Test' },
-    { date: '2026-04-30', label: 'Test finale 5 km', type: 'run', distance: 5, phase: 'Test' }
+    { index: 0, cardId: 'sc-3', badgeId: 'b-3', date: '2026-04-03', label: 'Corsa di ingresso', type: 'run', distance: 4, phase: 'Ingresso', section: 0, badgeText: 'CAUTO', badgeClass: 'badge b-caution' },
+    { index: 1, cardId: 'sc-5', badgeId: 'b-5', date: '2026-04-05', label: 'Corsa baseline 5 km', type: 'run', distance: 5, phase: 'Ingresso', section: 0, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 2, cardId: 'sc-6', badgeId: 'b-6', date: '2026-04-06', label: 'Palestra', type: 'gym', distance: 0, phase: 'Base', section: 1, badgeText: 'PALESTRA', badgeClass: 'badge b-gym' },
+    { index: 3, cardId: 'sc-7', badgeId: 'b-7', date: '2026-04-07', label: 'Corsa base post-palestra', type: 'run', distance: 5, phase: 'Base', section: 1, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 4, cardId: 'sc-11', badgeId: 'b-11', date: '2026-04-11', label: 'Variazioni 5 km', type: 'run', distance: 5, phase: 'Base', section: 1, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 5, cardId: 'sc-14', badgeId: 'b-14', date: '2026-04-14', label: 'Fartlek leggero', type: 'run', distance: 5, phase: 'Passo', section: 2, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 6, cardId: 'sc-17', badgeId: 'b-17', date: '2026-04-17', label: '5 km costanti', type: 'run', distance: 5, phase: 'Passo', section: 2, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 7, cardId: 'sc-21', badgeId: 'b-21', date: '2026-04-21', label: 'Recupero attivo', type: 'run', distance: 4.5, phase: 'Consolidamento', section: 3, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 8, cardId: 'sc-24', badgeId: 'b-24', date: '2026-04-24', label: 'Progressivo 5 km', type: 'run', distance: 5, phase: 'Consolidamento', section: 3, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 9, cardId: 'sc-28', badgeId: 'b-28', date: '2026-04-28', label: 'Corsa base consolidata', type: 'run', distance: 5, phase: 'Test', section: 4, badgeText: 'CORSA', badgeClass: 'badge b-run' },
+    { index: 10, cardId: 'sc-30', badgeId: 'b-30', date: '2026-04-30', label: 'Test finale 5 km', type: 'run', distance: 5, phase: 'Test', section: 4, badgeText: 'TEST', badgeClass: 'badge b-test' }
+  ];
+  const WEEK_META = [
+    { sectionId: 'week-0', label: 'INGRESSO' },
+    { sectionId: 'week-1', label: 'SETTIMANA 1 — COSTRUZIONE BASE' },
+    { sectionId: 'week-2', label: 'SETTIMANA 2 — LAVORO SUL PASSO' },
+    { sectionId: 'week-3', label: 'SETTIMANA 3 — CONSOLIDAMENTO' },
+    { sectionId: 'week-4', label: 'SETTIMANA 4 — TEST FINALE' }
   ];
   const MONTH_PHASES = [
     { start: '2026-04-01', end: '2026-04-05', title: 'Ingresso', copy: 'Stai entrando nel piano e stai testando il ginocchio con carichi controllati.' },
@@ -707,6 +724,20 @@
 
   function saveRuns(runs) {
     localStorage.setItem(KEY, JSON.stringify(runs));
+  }
+
+  function getScheduleState() {
+    try {
+      const state = JSON.parse(localStorage.getItem(SCHEDULE_KEY) || '{"adjustments":[]}');
+      if (!Array.isArray(state.adjustments)) return { adjustments: [] };
+      return state;
+    } catch (error) {
+      return { adjustments: [] };
+    }
+  }
+
+  function saveScheduleState(state) {
+    localStorage.setItem(SCHEDULE_KEY, JSON.stringify(state));
   }
 
   function switchTab(name, btn) {
@@ -743,6 +774,141 @@
     return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
   }
 
+  function addDays(dateStr, days) {
+    const date = new Date(dateStr + 'T12:00:00');
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  }
+
+  function getDateParts(dateStr) {
+    const date = new Date(dateStr + 'T12:00:00');
+    const monthShort = date.toLocaleDateString('it-IT', { month: 'short' }).replace('.', '').toUpperCase();
+    const weekday = date.toLocaleDateString('it-IT', { weekday: 'long' });
+    return {
+      date,
+      dayNumber: date.getDate(),
+      monthShort,
+      weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1)
+    };
+  }
+
+  function getEffectivePlan() {
+    const adjustments = getScheduleState().adjustments;
+    return APRIL_PLAN.map((item) => {
+      const delay = adjustments.filter((index) => index <= item.index).length;
+      return {
+        ...item,
+        delay,
+        effectiveDate: addDays(item.date, delay)
+      };
+    });
+  }
+
+  function formatRangeLabel(startDate, endDate) {
+    const start = getDateParts(startDate);
+    const end = getDateParts(endDate);
+    if (start.monthShort === end.monthShort) {
+      return start.dayNumber + '–' + end.dayNumber + ' ' + end.monthShort;
+    }
+    return start.dayNumber + ' ' + start.monthShort + '–' + end.dayNumber + ' ' + end.monthShort;
+  }
+
+  function resetCardStatuses() {
+    APRIL_PLAN.forEach((item) => {
+      const badge = document.getElementById(item.badgeId);
+      const card = document.getElementById(item.cardId);
+      if (badge) {
+        badge.textContent = item.badgeText;
+        badge.className = item.badgeClass;
+      }
+      if (card) {
+        card.classList.remove('completed');
+      }
+    });
+  }
+
+  function updateWeekHeaders(effectivePlan) {
+    WEEK_META.forEach((week, sectionIndex) => {
+      const items = effectivePlan.filter((item) => item.section === sectionIndex);
+      const header = document.querySelector('#' + week.sectionId + ' .week-header');
+      if (!header || !items.length) return;
+      header.textContent = formatRangeLabel(items[0].effectiveDate, items[items.length - 1].effectiveDate) + ' · ' + week.label;
+    });
+  }
+
+  function injectPlanActions() {
+    APRIL_PLAN.forEach((item) => {
+      const card = document.getElementById(item.cardId);
+      if (!card) return;
+      const detail = card.querySelector('.session-detail');
+      if (!detail || detail.querySelector('.session-actions')) return;
+      const actions = document.createElement('div');
+      actions.className = 'session-actions';
+      actions.innerHTML = `
+        <button class="session-action-btn" type="button" data-shift-index="${item.index}">Posticipa +1g</button>
+      `;
+      const shiftNote = document.createElement('div');
+      shiftNote.className = 'session-shift-note';
+      shiftNote.id = 'shift-note-' + item.index;
+      detail.appendChild(actions);
+      detail.appendChild(shiftNote);
+      actions.querySelector('button').addEventListener('click', (event) => {
+        event.stopPropagation();
+        postponeSession(item.index);
+      });
+    });
+  }
+
+  function applyScheduleToUI() {
+    const effectivePlan = getEffectivePlan();
+
+    effectivePlan.forEach((item) => {
+      const card = document.getElementById(item.cardId);
+      if (!card) return;
+      const dateParts = getDateParts(item.effectiveDate);
+      const dateBox = card.querySelector('.session-date');
+      const monthBox = card.querySelector('.session-date .ms');
+      const dayBox = card.querySelector('.session-day');
+      const shiftNote = document.getElementById('shift-note-' + item.index);
+
+      if (dateBox && dateBox.childNodes.length) {
+        dateBox.childNodes[0].textContent = String(dateParts.dayNumber);
+      }
+      if (monthBox) monthBox.textContent = dateParts.monthShort;
+      if (dayBox) dayBox.textContent = dateParts.weekday;
+
+      card.dataset.effectiveDate = item.effectiveDate;
+      card.classList.toggle('shifted', item.delay > 0);
+      if (shiftNote) {
+        shiftNote.textContent = item.delay > 0
+          ? 'Calendario spostato di +' + item.delay + ' giorno' + (item.delay > 1 ? 'i' : '') + ' per questa sessione.'
+          : '';
+      }
+    });
+
+    updateWeekHeaders(effectivePlan);
+  }
+
+  function postponeSession(index) {
+    const state = getScheduleState();
+    state.adjustments.push(index);
+    saveScheduleState(state);
+    renderAppState();
+  }
+
+  function undoLastShift() {
+    const state = getScheduleState();
+    state.adjustments.pop();
+    saveScheduleState(state);
+    renderAppState();
+  }
+
+  function resetSchedule() {
+    if (!confirm('Resettare tutti gli slittamenti del calendario?')) return;
+    saveScheduleState({ adjustments: [] });
+    renderAppState();
+  }
+
   function getCurrentPhase(todayStr) {
     return MONTH_PHASES.find((phase) => todayStr >= phase.start && todayStr <= phase.end) || MONTH_PHASES[MONTH_PHASES.length - 1];
   }
@@ -753,22 +919,24 @@
 
   function renderCurrentStatus() {
     const runs = getRuns();
+    const effectivePlan = getEffectivePlan();
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const runDates = new Set(runs.map((run) => run.date));
-    const plannedRuns = APRIL_PLAN.filter((item) => item.type === 'run');
-    const dueRuns = plannedRuns.filter((item) => item.date <= todayStr);
-    const completedDueRuns = dueRuns.filter((item) => runDates.has(item.date)).length;
-    const totalPlannedCompleted = plannedRuns.filter((item) => runDates.has(item.date)).length;
-    const nextPlannedRun = plannedRuns.find((item) => item.date >= todayStr && !runDates.has(item.date))
-      || plannedRuns.find((item) => !runDates.has(item.date));
+    const plannedRuns = effectivePlan.filter((item) => item.type === 'run');
+    const dueRuns = plannedRuns.filter((item) => item.effectiveDate <= todayStr);
+    const completedDueRuns = dueRuns.filter((item) => runDates.has(item.effectiveDate)).length;
+    const totalPlannedCompleted = plannedRuns.filter((item) => runDates.has(item.effectiveDate)).length;
+    const nextPlannedRun = plannedRuns.find((item) => item.effectiveDate >= todayStr && !runDates.has(item.effectiveDate))
+      || plannedRuns.find((item) => !runDates.has(item.effectiveDate));
     const longestRun = runs.length ? Math.max(...runs.map((run) => run.km)) : 0;
     const bestPace = runs.length ? Math.min(...runs.map((run) => run.paceTotal)) : null;
     const currentPhase = getCurrentPhase(todayStr);
     const roadmapStep = getRoadmapStep(todayStr);
+    const totalDelay = getScheduleState().adjustments.length;
     const completedText = dueRuns.length ? completedDueRuns + '/' + dueRuns.length : '0/0';
     const phaseText = roadmapStep.label + ' · ' + roadmapStep.detail;
-    const nextText = nextPlannedRun ? formatDateLabel(nextPlannedRun.date) + ' · ' + nextPlannedRun.label : 'Aprile completato';
+    const nextText = nextPlannedRun ? formatDateLabel(nextPlannedRun.effectiveDate) + ' · ' + nextPlannedRun.label : 'Aprile completato';
     const distanceText = longestRun ? longestRun.toFixed(longestRun % 1 === 0 ? 0 : 1) + ' km' : '0 km';
 
     document.getElementById('statusTitle').textContent = currentPhase.title + ' · punto attuale';
@@ -781,15 +949,19 @@
     `;
     document.getElementById('statusNote').textContent =
       'Prossimo riferimento: ' + nextText + '. Hai registrato ' + runs.length + ' corse totali, di cui ' +
-      totalPlannedCompleted + ' coincidono con le sessioni del piano di aprile. Traguardo stimato 10 km: fine giugno 2026.';
+      totalPlannedCompleted + ' coincidono con le sessioni del piano di aprile. Calendario spostato finora di ' +
+      totalDelay + ' giorno' + (totalDelay === 1 ? '' : 'i') + '. Traguardo stimato 10 km: fine giugno 2026.';
+    document.getElementById('statusActions').innerHTML = `
+      <button class="action-btn primary" type="button" onclick="undoLastShift()" ${totalDelay === 0 ? 'disabled' : ''}>Annulla ultimo slittamento</button>
+      <button class="action-btn warn" type="button" onclick="resetSchedule()" ${totalDelay === 0 ? 'disabled' : ''}>Reset calendario</button>
+    `;
   }
 
   function markDone(dateStr) {
-    const date = new Date(dateStr + 'T12:00:00');
-    if (date.getMonth() !== 3) return;
-    const day = date.getDate();
-    const badge = document.getElementById('b-' + day);
-    const card = document.getElementById('sc-' + day);
+    const planItem = getEffectivePlan().find((item) => item.type === 'run' && item.effectiveDate === dateStr);
+    if (!planItem) return;
+    const badge = document.getElementById(planItem.badgeId);
+    const card = document.getElementById(planItem.cardId);
     if (badge) {
       badge.textContent = '✓ FATTO';
       badge.className = 'badge b-done';
@@ -835,6 +1007,8 @@
 
   function renderDiary() {
     const runs = getRuns();
+    resetCardStatuses();
+    applyScheduleToUI();
     runs.forEach((run) => markDone(run.date));
 
     const summaryBox = document.getElementById('summaryBox');
@@ -995,6 +1169,8 @@
   }
 
   function renderAppState() {
+    injectPlanActions();
+    applyScheduleToUI();
     renderCurrentStatus();
     renderDiary();
   }
