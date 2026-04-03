@@ -1,0 +1,11 @@
+{
+  "name": "Programma Corsa Aprile 2026",
+  "short_name": "Corsa Aprile",
+  "description": "Piano corsa e diario progressi per aprile 2026.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "lang": "it",
+  "orientation": "portrait"
+}

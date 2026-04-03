@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Corsa Aprile">
+<title>Programma Corsa Aprile 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f0e8;
+    --accent: #c8ff00;
+    --accent2: #ff6b35;
+    --gray: #1e1e1e;
+    --muted: #666;
+    --page-pad: max(20px, env(safe-area-inset-left));
+    --page-pad-right: max(20px, env(safe-area-inset-right));
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: var(--black); }
+  body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; -webkit-text-size-adjust: 100%; padding-bottom: env(safe-area-inset-bottom); }
+
+  .tab-bar { display: flex; border-bottom: 1px solid #222; position: sticky; top: 0; background: rgba(10, 10, 10, 0.96); backdrop-filter: blur(12px); z-index: 100; padding-top: env(safe-area-inset-top); }
+  .tab-btn { flex: 1; min-height: 48px; padding: 16px 8px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; background: transparent; color: var(--muted); border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  header { padding: calc(28px + env(safe-area-inset-top)) var(--page-pad-right) 24px var(--page-pad); border-bottom: 1px solid #222; position: relative; overflow: hidden; }
+  header::before { content: 'APR'; font-family: 'Bebas Neue', sans-serif; font-size: 180px; color: #111; position: absolute; right: -10px; top: -20px; line-height: 1; pointer-events: none; }
+  .header-tag { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(38px, 8vw, 64px); line-height: 0.95; position: relative; z-index: 1; }
+  header h1 span { color: var(--accent); }
+  .stats-row { display: flex; gap: 24px; margin-top: 20px; position: relative; z-index: 1; flex-wrap: wrap; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .warning-banner { margin: 16px var(--page-pad-right) 0 var(--page-pad); background: #1a0f00; border: 1px solid var(--accent2); border-left: 4px solid var(--accent2); padding: 12px 14px; border-radius: 4px; font-size: 12px; color: #ffb38a; display: flex; gap: 8px; }
+
+  .week-nav { display: flex; gap: 8px; padding: 20px var(--page-pad-right) 0 var(--page-pad); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-padding-left: var(--page-pad); }
+  .week-nav::-webkit-scrollbar { display: none; }
+  .week-btn { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; min-height: 40px; padding: 7px 14px; border: 1px solid #333; background: transparent; color: var(--muted); cursor: pointer; border-radius: 2px; white-space: nowrap; transition: all 0.2s; }
+  .week-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .week-btn.active { background: var(--accent); color: var(--black); border-color: var(--accent); font-weight: 700; }
+
+  .sessions-container { padding: 20px var(--page-pad-right) 20px var(--page-pad); display: flex; flex-direction: column; gap: 14px; }
+  .week-section { display: none; }
+  .week-section.active { display: flex; flex-direction: column; gap: 14px; }
+  .week-header { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+  .session-card { background: var(--gray); border-radius: 8px; overflow: hidden; border: 1px solid #2a2a2a; transition: border-color 0.2s; }
+  .session-card.gym { background: #131313; border-color: #1e1e1e; }
+  .session-card.completed { border-color: #3a5a00 !important; }
+  .session-header { padding: 14px 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; min-height: 72px; }
+  .session-date { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; color: var(--white); min-width: 44px; text-align: center; }
+  .session-date .ms { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; display: block; text-align: center; margin-top: 2px; }
+  .session-info { flex: 1; }
+  .session-day { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .session-title { font-size: 14px; font-weight: 600; }
+  .badge { font-family: 'Space Mono', monospace; font-size: 10px; padding: 4px 9px; border-radius: 2px; letter-spacing: 1px; font-weight: 700; flex-shrink: 0; }
+  .b-run { background: var(--accent); color: var(--black); }
+  .b-gym { background: #1e1e1e; color: var(--muted); border: 1px solid #333; }
+  .b-test { background: var(--accent2); color: var(--white); }
+  .b-caution { background: #2a1500; color: var(--accent2); border: 1px solid var(--accent2); }
+  .b-done { background: #2a4a00; color: var(--accent); border: 1px solid #3a6a00; }
+  .chevron { color: var(--muted); font-size: 12px; transition: transform 0.3s; flex-shrink: 0; }
+  .session-card.open .chevron { transform: rotate(180deg); }
+  .session-detail { display: none; padding: 0 18px 18px; border-top: 1px solid #2a2a2a; }
+  .session-card.open .session-detail { display: block; }
+
+  .phase { margin-top: 14px; }
+  .phase-title { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .phase-title::after { content: ''; flex: 1; height: 1px; background: #2a2a2a; }
+  .ph-warm { color: #ff9500; } .ph-run { color: var(--accent); } .ph-cool { color: #5bb8ff; } .ph-gym { color: #9b8fff; }
+  .pd { font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: var(--muted); }
+  .step { display: flex; gap: 10px; margin-bottom: 7px; }
+  .sn { font-family: 'Bebas Neue', sans-serif; font-size: 17px; line-height: 1.3; color: #333; min-width: 18px; }
+  .st { font-size: 13px; line-height: 1.6; color: #bbb; }
+  .st strong { color: var(--white); }
+  .pace { color: var(--accent); font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; }
+  .warn { color: var(--accent2); }
+  .mrow { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .mc { background: #0d0d0d; border: 1px solid #222; border-radius: 4px; padding: 9px 12px; flex: 1; min-width: 72px; }
+  .mv { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); line-height: 1; }
+  .ml { font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; margin-top: 2px; }
+  .ntip { margin-top: 12px; background: #0d1a00; border: 1px solid #2a4000; border-radius: 4px; padding: 10px 12px; font-size: 12px; color: #a8d060; display: flex; gap: 8px; }
+
+  .diary-section { padding: 20px var(--page-pad-right) 28px var(--page-pad); }
+  .diary-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-bottom: 4px; }
+  .diary-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .summary-box { background: #0d1a00; border: 1px solid #2a4000; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+  .sb-title { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .sg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sv { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); line-height: 1; }
+  .sl { font-size: 10px; color: #5a8a20; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .trend-up { color: #7aff00; font-size: 10px; font-family: 'Space Mono', monospace; }
+  .trend-down { color: var(--accent2); font-size: 10px; font-family: 'Space Mono', monospace; }
+
+  .chart-container { background: var(--gray); border: 1px solid #2a2a2a; border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .ct { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+  .chart-wrap { position: relative; height: 160px; }
+  canvas { display: block; }
+  .chart-empty { text-align: center; padding: 40px 0; color: var(--muted); font-size: 13px; }
+
+  .log-form { background: var(--gray); border: 1px solid #2a2a2a; border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+  .lft { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .fg { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 100px; }
+  .fg label { font-size: 10px; font-family: 'Space Mono', monospace; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .fg input, .fg select, .fg textarea { background: #0d0d0d; border: 1px solid #333; border-radius: 4px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 16px; padding: 12px 12px; outline: none; transition: border-color 0.2s; min-height: 48px; }
+  .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--accent); }
+  .fg textarea { resize: vertical; min-height: 96px; }
+  .fg select option { background: #1e1e1e; }
+  .btn-log { width: 100%; min-height: 52px; padding: 14px; background: var(--accent); color: var(--black); font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; margin-top: 4px; transition: opacity 0.2s; }
+  .btn-log:hover { opacity: 0.85; }
+  .btn-log:active { opacity: 0.7; }
+
+  .et { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .entry-item { background: var(--gray); border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; }
+  .entry-item.pr { border-color: #c8ff0055; background: #0d1a00; }
+  .edb { text-align: center; min-width: 40px; }
+  .edn { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; }
+  .edm { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  .eb { flex: 1; }
+  .es { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .esv { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--accent); line-height: 1; }
+  .esl { font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .ef { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 2px; margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .f-great { background: #1a3a00; color: #7aff00; }
+  .f-good { background: #1a2a00; color: #a8cc00; }
+  .f-ok { background: #2a2200; color: #ccaa00; }
+  .f-hard { background: #2a1500; color: #ff8c42; }
+  .epr { font-size: 10px; color: var(--accent); font-family: 'Space Mono', monospace; }
+  .enote { font-size: 12px; color: #888; margin-top: 4px; font-style: italic; }
+  .btn-del { background: transparent; border: none; color: #444; cursor: pointer; font-size: 16px; padding: 0; align-self: flex-start; transition: color 0.2s; }
+  .btn-del:hover { color: var(--accent2); }
+  .no-entries { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
+
+  footer { padding: 28px var(--page-pad-right) calc(28px + env(safe-area-inset-bottom)) var(--page-pad); border-top: 1px solid #1a1a1a; text-align: center; font-size: 10px; color: #333; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+
+  @media (max-width: 480px) {
+    .header-tag { font-size: 10px; letter-spacing: 2px; }
+    header::before { font-size: 120px; right: -4px; top: 8px; }
+    .stats-row { gap: 14px; }
+    .stat-val { font-size: 22px; }
+    .week-header { line-height: 1.6; }
+    .session-header { padding: 14px; gap: 10px; align-items: flex-start; }
+    .session-date { min-width: 38px; font-size: 24px; }
+    .session-title { font-size: 13px; }
+    .badge { font-size: 9px; padding: 4px 7px; }
+    .chevron { margin-top: 3px; }
+    .session-detail { padding: 0 14px 16px; }
+    .mrow { gap: 8px; }
+    .mc { min-width: calc(50% - 4px); }
+    .chart-wrap { height: 180px; }
+    .entry-item { padding: 12px 14px; gap: 10px; }
+  }
+
+  @media (max-width: 360px) {
+    header h1 { font-size: 34px; }
+    .warning-banner { font-size: 11px; }
+    .week-btn { letter-spacing: 1px; padding: 7px 12px; }
+    .mc { min-width: 100%; }
+    .sg { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">🏃 Nike Run Club — Piano Personalizzato</div>
+  <h1>CORSA<br><span>APRILE</span><br>2026</h1>
+  <p style="font-size:12px;color:var(--muted);margin-top:8px;position:relative;z-index:1">Montesilvano / Pescara · Asfalto · Pianura</p>
+  <div class="stats-row">
+    <div><div class="stat-val">9</div><div class="stat-label">Sessioni</div></div>
+    <div><div class="stat-val">~44</div><div class="stat-label">Km totali</div></div>
+    <div><div class="stat-val">5'40"</div><div class="stat-label">Obiettivo</div></div>
+  </div>
+</header>
+
+<div class="warning-banner">
+  <span>⚠️</span>
+  <span><strong>Ginocchio:</strong> Oggi corri soft a 6'10"-6'20"/km. Se il fastidio aumenta fermati. Ghiaccio dopo.</span>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('piano', this)">📋 Piano</button>
+  <button class="tab-btn" onclick="switchTab('diario', this)">📊 Progressi</button>
+</div>
+
+<div class="tab-content active" id="tab-piano">
+  <div class="week-nav">
+    <button class="week-btn active" onclick="showWeek(0)">SETT. 0</button>
+    <button class="week-btn" onclick="showWeek(1)">SETT. 1</button>
+    <button class="week-btn" onclick="showWeek(2)">SETT. 2</button>
+    <button class="week-btn" onclick="showWeek(3)">SETT. 3</button>
+    <button class="week-btn" onclick="showWeek(4)">SETT. 4</button>
+  </div>
+  <div class="sessions-container">
+    <div class="week-section active" id="week-0">
+      <div class="week-header">3–5 APRILE · INGRESSO</div>
+
+      <div class="session-card open" id="sc-3" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">3<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Venerdì</div><div class="session-title">Corsa di ingresso ⚠️ soft</div></div>
+          <span class="badge b-caution" id="b-3">CAUTO</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">4</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">6'15"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~30'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">6 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>3 min camminata veloce</strong> — rotazioni caviglie mentre cammini. Extra lungo oggi per il ginocchio.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><strong>2 min corsetta</strong> a <span class="pace">7'00"/km</span> — quasi camminata. Senti subito il ginocchio.</div></div>
+            <div class="step"><div class="sn">3</div><div class="st"><strong>1 min mobilità</strong> — 10 rotazioni ginocchia, 10 alzate ginocchio, 10 calci al sedere.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">20 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>4 km continui</strong> a <span class="pace">6'10"–6'20"/km</span> — ritmo conversazionale. Devi riuscire a parlare.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><span class="warn">⚠️ Regola ginocchio:</span> se il fastidio supera 5/10 cammina e torna a casa. Senza eccezioni.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + polpaccio 30s, femorale 30s, flessori anca 30s per lato.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><span class="warn">🧊 Ghiaccio 10 min</span> sul ginocchio dopo. Obbligatorio oggi.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> "Easy Run" 4 km. Avviso ritmo max 6'25"/km per non andare troppo veloce.</span></div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-5" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">5<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Sabato</div><div class="session-title">Corsa base — la tua baseline</div></div>
+          <span class="badge b-run" id="b-5">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">6'00"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~32'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'45"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~23 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>5 km continui a</strong> <span class="pace">6'00"/km</span> costante. Registra su NRC — è il tuo punto di partenza del mese.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching polpacci, femorali, flessori anca 30s ciascuno.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> "Easy Run" 5 km. Salva con nota "baseline aprile".</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-section" id="week-1">
+      <div class="week-header">6–12 APRILE · SETTIMANA 1 — COSTRUZIONE BASE</div>
+
+      <div class="session-card gym" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">6<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Lunedì</div><div class="session-title">Palestra — Personal Trainer</div></div>
+          <span class="badge b-gym">PALESTRA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="phase"><div class="phase-title ph-gym">💪 NOTA</div>
+            <div class="step"><div class="sn">•</div><div class="st">Domani corri. Segnala al trainer: meglio non esagerare con il volume gambe oggi.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-7" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">7<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Martedì</div><div class="session-title">Corsa base — gambe post-palestra</div></div>
+          <span class="badge b-run" id="b-7">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">6'00"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~32'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'45"/km</span>. Gambe pesanti — è normale dopo la palestra.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~23 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>5 km a</strong> <span class="pace">6'00"/km</span>. Se le gambe sono stanche accetta 6'10". Non forzare mai dopo la palestra.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st">Parti piano i primi 2 km — l'obiettivo è finire uguale a come hai iniziato.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>Stretching esteso:</strong> polpacci 45s, femorali 45s, quadricipiti 30s, flessori anca 30s, schiena 30s.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> "Easy Run" 5 km. Avviso ritmo: 5'50"–6'10"/km.</span></div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-11" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">11<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Sabato</div><div class="session-title">Corsa con variazioni — primo lavoro ritmo</div></div>
+          <span class="badge b-run" id="b-11">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">5'50"</div><div class="ml">MEDIO</div></div>
+            <div class="mc"><div class="mv">~31'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'30"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~23 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>Km 1:</strong> <span class="pace">6'10"/km</span> — entri in ritmo.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><strong>Km 2-3-4:</strong> <span class="pace">5'50"/km</span> — ritmo sostenuto, qui si lavora davvero.</div></div>
+            <div class="step"><div class="sn">3</div><div class="st"><strong>Km 5:</strong> <span class="pace">6'10"/km</span> — chiudi leggero.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching. Femorali 45s dopo questo lavoro.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> Avviso ritmo 5'40"–6'20"/km per gestire le variazioni km per km.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-section" id="week-2">
+      <div class="week-header">13–19 APRILE · SETTIMANA 2 — LAVORO SUL PASSO</div>
+
+      <div class="session-card" id="sc-14" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">14<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Martedì</div><div class="session-title">Fartlek leggero — primo allenamento qualità</div></div>
+          <span class="badge b-run" id="b-14">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">5'45"</div><div class="ml">MEDIO</div></div>
+            <div class="mc"><div class="mv">4×</div><div class="ml">CICLI</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'30"/km</span>. Oggi lavori sul ritmo — riscaldamento obbligatorio.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 FARTLEK — 4 CICLI (20 MIN)</div>
+            <div class="step"><div class="sn">→</div><div class="st"><span class="pace">1 min a 5'20"/km</span> — spinta decisa, non uno sprint. Aumenta la frequenza dei passi.</div></div>
+            <div class="step"><div class="sn">→</div><div class="st"><span class="pace">3 min a 6'00"/km</span> — recupero attivo, non fermarti mai. Ripeti × 4.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching 45s ogni muscolo. Dopo il fartlek i muscoli sono più sollecitati.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> Usa un timer per i cicli 1'+3'. Cerca "Fartlek Run" tra le corse guidate NRC.</span></div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-17" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">17<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Sabato</div><div class="session-title">5 km costanti a 5'50"/km</div></div>
+          <span class="badge b-run" id="b-17">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">5'50"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~31'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'30"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~23 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>5 km costanti a</strong> <span class="pace">5'50"/km</span>. Se finisci a questo passo senza affanno eccessivo, sei migliorato rispetto a inizio mese.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching standard. Annotati come ti sei sentito.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> Avviso ritmo stretto 5'45"–5'55"/km. Controlla ogni split km.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-section" id="week-3">
+      <div class="week-header">20–26 APRILE · SETTIMANA 3 — CONSOLIDAMENTO</div>
+
+      <div class="session-card" id="sc-21" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">21<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Martedì</div><div class="session-title">Recupero attivo — scarico programmato</div></div>
+          <span class="badge b-run" id="b-21">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">4.5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">6'15"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~28'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'45"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~19 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>4,5 km a</strong> <span class="pace">6'10"–6'20"/km</span>. Lenta di proposito — dopo settimane di doppio stimolo il recupero attivo accelera i progressi.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching esteso 45s ogni muscolo.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> "Recovery Run" se disponibile. Nessun avviso ritmo — corri a sensazione oggi.</span></div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-24" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">24<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Sabato</div><div class="session-title">Progressivo — accelera ogni km</div></div>
+          <span class="badge b-run" id="b-24">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">5'40"</div><div class="ml">MEDIO</div></div>
+            <div class="mc"><div class="mv">~32'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'30"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 PROGRESSIVO — 5 KM</div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>Km 1:</strong> <span class="pace">6'00"/km</span> — inizio comodo.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><strong>Km 2:</strong> <span class="pace">5'50"/km</span></div></div>
+            <div class="step"><div class="sn">3</div><div class="st"><strong>Km 3:</strong> <span class="pace">5'40"/km</span></div></div>
+            <div class="step"><div class="sn">4</div><div class="st"><strong>Km 4:</strong> <span class="pace">5'30"/km</span></div></div>
+            <div class="step"><div class="sn">5</div><div class="st"><strong>Km 5:</strong> <span class="pace">5'20"/km</span> — tutto quello che hai. Il km più duro del mese.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">6 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>3 min camminata</strong> — hai finito forte, non fermarti di botto. Stretching completo 45s.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> Controlla gli split km automatici per verificare la progressione del passo.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-section" id="week-4">
+      <div class="week-header">27–30 APRILE · SETTIMANA 4 — TEST FINALE</div>
+
+      <div class="session-card" id="sc-28" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">28<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Martedì</div><div class="session-title">Corsa base consolidata</div></div>
+          <span class="badge b-run" id="b-28">CORSA</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">5'40"</div><div class="ml">TARGET</div></div>
+            <div class="mc"><div class="mv">~30'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + <strong>3 min corsetta</strong> a <span class="pace">6'20"/km</span>.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 CORSA <span class="pd">~22 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>5 km a</strong> <span class="pace">5'40"/km</span> costante. A questo punto del mese deve sentirsi gestibile. Sabato c'è il test — non strafare.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">5 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>2 min camminata</strong> + stretching leggero.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> Avviso ritmo 5'35"–5'45"/km.</span></div>
+        </div>
+      </div>
+
+      <div class="session-card" id="sc-30" onclick="toggleCard(this)">
+        <div class="session-header">
+          <div class="session-date">30<span class="ms">APR</span></div>
+          <div class="session-info"><div class="session-day">Mercoledì</div><div class="session-title">🎯 TEST FINALE — miglior passo su 5 km</div></div>
+          <span class="badge b-test" id="b-30">TEST</span><span class="chevron">▼</span>
+        </div>
+        <div class="session-detail">
+          <div class="mrow">
+            <div class="mc"><div class="mv">5</div><div class="ml">KM</div></div>
+            <div class="mc"><div class="mv">&lt;5'40"</div><div class="ml">OBIETTIVO</div></div>
+            <div class="mc"><div class="mv">~30'</div><div class="ml">DURATA</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-warm">🔥 RISCALDAMENTO <span class="pd">7 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>3 min camminata veloce</strong> — extra lungo, è il test del mese.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><strong>3 min corsetta</strong> a <span class="pace">6'20"/km</span>.</div></div>
+            <div class="step"><div class="sn">3</div><div class="st"><strong>1 min:</strong> 3 accelerazioni di 10 sec per attivare le fibre rapide.</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-run">🏃 TEST — 5 KM AL MASSIMO SOSTENIBILE</div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>Km 1:</strong> <span class="pace">5'50"/km</span> — non partire sparato o cedi negli ultimi km.</div></div>
+            <div class="step"><div class="sn">2</div><div class="st"><strong>Km 2-3:</strong> <span class="pace">5'40"/km</span> — obiettivo del mese.</div></div>
+            <div class="step"><div class="sn">3</div><div class="st"><strong>Km 4-5:</strong> dai tutto. Se stai bene prova a scendere sotto <span class="pace">5'30"/km</span>.</div></div>
+            <div class="step"><div class="sn">4</div><div class="st">Confronta il passo medio con il 5 aprile. Quello è il tuo miglioramento reale. 🏆</div></div>
+          </div>
+          <div class="phase"><div class="phase-title ph-cool">❄️ DEFATICAMENTO <span class="pd">7 MIN</span></div>
+            <div class="step"><div class="sn">1</div><div class="st"><strong>3 min camminata</strong> — non fermarti di colpo dopo uno sforzo massimale. Stretching completo 45s ogni muscolo.</div></div>
+          </div>
+          <div class="ntip"><span>👟</span><span><strong>NRC:</strong> "Time Trial 5K" se disponibile. Salva e confronta con la sessione del 5 aprile.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-diario">
+  <div class="diary-section">
+    <div class="diary-title">I TUOI PROGRESSI</div>
+    <div class="diary-sub">Inserisci i dati dopo ogni corsa per monitorare il miglioramento</div>
+
+    <div class="summary-box" id="summaryBox" style="display:none">
+      <div class="sb-title">📊 Riepilogo Mese</div>
+      <div class="sg" id="summaryGrid"></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-header">
+        <div class="ct">📈 Andamento Passo</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace">MIN/KM</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="paceChart" style="display:none"></canvas>
+        <div class="chart-empty" id="chartEmpty">Nessuna corsa ancora.<br>Inserisci la prima qui sotto! 👇</div>
+      </div>
+    </div>
+
+    <div class="log-form">
+      <div class="lft">+ Registra Corsa</div>
+      <div class="form-row">
+        <div class="fg"><label>Data</label><input type="date" id="inp-date"></div>
+        <div class="fg"><label>Distanza (km)</label><input type="number" id="inp-km" placeholder="es. 5.2" step="0.1" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Passo — Minuti</label><input type="number" id="inp-pm" placeholder="es. 5" min="3" max="10"></div>
+        <div class="fg"><label>Passo — Secondi</label><input type="number" id="inp-ps" placeholder="es. 52" min="0" max="59"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Come ti sei sentito?</label>
+          <select id="inp-feel">
+            <option value="great">💪 Ottimo — avevo ancora benzina</option>
+            <option value="good" selected>😊 Bene — sforzo gestito</option>
+            <option value="ok">😐 Ok — un po' faticoso</option>
+            <option value="hard">😓 Duro — ho sofferto</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Note (opzionale)</label><textarea id="inp-note" placeholder="es. gambe pesanti, ginocchio ok, vento forte..."></textarea></div>
+      </div>
+      <button class="btn-log" onclick="logRun()">SALVA CORSA</button>
+    </div>
+
+    <div class="et">Corse Registrate</div>
+    <div id="entriesList"><div class="no-entries">Nessuna corsa ancora. Vai a correre! 🏃</div></div>
+  </div>
+</div>
+
+<footer>
+  PIANO PERSONALIZZATO · APRILE 2026 · MONTESILVANO / PESCARA<br>
+  <span style="color:#333;margin-top:4px;display:block">OBIETTIVO FINALE: 10 KM</span>
+</footer>
+
+<script>
+  const KEY = 'runs_apr2026';
+
+  function getRuns() {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || '[]');
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveRuns(runs) {
+    localStorage.setItem(KEY, JSON.stringify(runs));
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach((tab) => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach((tabBtn) => tabBtn.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'diario') renderDiary();
+  }
+
+  function showWeek(n) {
+    document.querySelectorAll('.week-section').forEach((section) => section.classList.remove('active'));
+    document.querySelectorAll('.week-btn').forEach((button) => button.classList.remove('active'));
+    document.getElementById('week-' + n).classList.add('active');
+    document.querySelectorAll('.week-btn')[n].classList.add('active');
+  }
+
+  function toggleCard(card) {
+    const wasOpen = card.classList.contains('open');
+    document.querySelectorAll('.session-card.open').forEach((item) => item.classList.remove('open'));
+    if (!wasOpen) card.classList.add('open');
+  }
+
+  document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
+
+  function markDone(dateStr) {
+    const date = new Date(dateStr + 'T12:00:00');
+    if (date.getMonth() !== 3) return;
+    const day = date.getDate();
+    const badge = document.getElementById('b-' + day);
+    const card = document.getElementById('sc-' + day);
+    if (badge) {
+      badge.textContent = '✓ FATTO';
+      badge.className = 'badge b-done';
+    }
+    if (card) card.classList.add('completed');
+  }
+
+  function logRun() {
+    const date = document.getElementById('inp-date').value;
+    const km = parseFloat(document.getElementById('inp-km').value);
+    const pm = parseInt(document.getElementById('inp-pm').value, 10);
+    const ps = parseInt(document.getElementById('inp-ps').value, 10);
+    const feel = document.getElementById('inp-feel').value;
+    const note = document.getElementById('inp-note').value.trim();
+
+    if (!date || Number.isNaN(km) || km <= 0 || Number.isNaN(pm) || Number.isNaN(ps)) {
+      alert('Inserisci data, km e passo completo!');
+      return;
+    }
+
+    const paceTotal = pm + ps / 60;
+    const run = { id: Date.now(), date, km, pm, ps, paceTotal, feel, note };
+    const runs = getRuns();
+    runs.push(run);
+    runs.sort((a, b) => a.date.localeCompare(b.date));
+    saveRuns(runs);
+
+    document.getElementById('inp-km').value = '';
+    document.getElementById('inp-pm').value = '';
+    document.getElementById('inp-ps').value = '';
+    document.getElementById('inp-note').value = '';
+
+    renderDiary();
+    markDone(date);
+  }
+
+  function deleteRun(id, event) {
+    event.stopPropagation();
+    if (!confirm('Eliminare questa corsa?')) return;
+    saveRuns(getRuns().filter((run) => run.id !== id));
+    renderDiary();
+  }
+
+  function renderDiary() {
+    const runs = getRuns();
+    runs.forEach((run) => markDone(run.date));
+
+    const summaryBox = document.getElementById('summaryBox');
+    if (runs.length > 0) {
+      summaryBox.style.display = 'block';
+      const totalKm = runs.reduce((sum, run) => sum + run.km, 0);
+      const avgPace = runs.reduce((sum, run) => sum + run.paceTotal, 0) / runs.length;
+      const bestPace = Math.min(...runs.map((run) => run.paceTotal));
+      const improvement = runs.length > 1 ? runs[0].paceTotal - runs[runs.length - 1].paceTotal : 0;
+      const formatPace = (value) => {
+        const minutes = Math.floor(value);
+        const seconds = Math.round((value - minutes) * 60).toString().padStart(2, '0');
+        return minutes + "'" + seconds + '"';
+      };
+      const trendHTML = runs.length > 1
+        ? improvement > 0
+          ? '<div class="trend-up">▲ ' + Math.round(improvement * 60) + 's migliorato</div>'
+          : improvement < 0
+            ? '<div class="trend-down">▼ ' + Math.round(Math.abs(improvement * 60)) + 's peggiorato</div>'
+            : ''
+        : '';
+
+      document.getElementById('summaryGrid').innerHTML = `
+        <div><div class="sv">${runs.length}</div><div class="sl">Corse fatte</div></div>
+        <div><div class="sv">${totalKm.toFixed(1)}</div><div class="sl">Km totali</div></div>
+        <div><div class="sv">${formatPace(avgPace)}</div><div class="sl">Passo medio</div></div>
+        <div><div class="sv">${formatPace(bestPace)}</div><div class="sl">Miglior passo</div>${trendHTML}</div>
+      `;
+    } else {
+      summaryBox.style.display = 'none';
+    }
+
+    const canvas = document.getElementById('paceChart');
+    const empty = document.getElementById('chartEmpty');
+    if (runs.length >= 2) {
+      empty.style.display = 'none';
+      canvas.style.display = 'block';
+      drawChart(runs);
+    } else {
+      empty.style.display = 'block';
+      canvas.style.display = 'none';
+    }
+
+    const list = document.getElementById('entriesList');
+    if (runs.length === 0) {
+      list.innerHTML = '<div class="no-entries">Nessuna corsa ancora. Vai a correre! 🏃</div>';
+      return;
+    }
+
+    const best = Math.min(...runs.map((run) => run.paceTotal));
+    const months = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
+    const feelMap = {
+      great: ['💪 Ottimo', 'f-great'],
+      good: ['😊 Bene', 'f-good'],
+      ok: ['😐 Ok', 'f-ok'],
+      hard: ['😓 Duro', 'f-hard']
+    };
+
+    list.innerHTML = [...runs].reverse().map((run) => {
+      const date = new Date(run.date + 'T12:00:00');
+      const isPR = run.paceTotal === best && runs.length > 1;
+      const [feelText, feelClass] = feelMap[run.feel] || feelMap.good;
+      return `<div class="entry-item ${isPR ? 'pr' : ''}">
+        <div class="edb"><div class="edn">${date.getDate()}</div><div class="edm">${months[date.getMonth()]}</div></div>
+        <div class="eb">
+          <div class="es">
+            <div><div class="esv">${run.km}</div><div class="esl">KM</div></div>
+            <div><div class="esv">${run.pm}'${run.ps.toString().padStart(2, '0')}"</div><div class="esl">MIN/KM</div></div>
+          </div>
+          <span class="ef ${feelClass}">${feelText}</span>
+          ${isPR ? '<div class="epr"> ⚡ MIGLIOR PASSO DEL MESE</div>' : ''}
+          ${run.note ? `<div class="enote">"${run.note}"</div>` : ''}
+        </div>
+        <button class="btn-del" onclick="deleteRun(${run.id}, event)">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  function drawChart(runs) {
+    const canvas = document.getElementById('paceChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.parentElement.clientWidth;
+    const height = 160;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const paces = runs.map((run) => run.paceTotal);
+    const minP = Math.min(...paces) - 0.3;
+    const maxP = Math.max(...paces) + 0.3;
+    const padLeft = 44;
+    const padRight = 16;
+    const padTop = 16;
+    const padBottom = 28;
+    const chartWidth = width - padLeft - padRight;
+    const chartHeight = height - padTop - padBottom;
+    const toY = (value) => padTop + chartHeight * (1 - (value - minP) / (maxP - minP));
+    const toX = (index) => padLeft + (chartWidth / Math.max(runs.length - 1, 1)) * index;
+    const formatPace = (value) => {
+      const minutes = Math.floor(value);
+      const seconds = Math.round((value - minutes) * 60).toString().padStart(2, '0');
+      return minutes + "'" + seconds + '"';
+    };
+
+    for (let i = 0; i <= 4; i += 1) {
+      const y = padTop + (chartHeight / 4) * i;
+      ctx.strokeStyle = '#1e1e1e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(width - padRight, y);
+      ctx.stroke();
+      ctx.fillStyle = '#555';
+      ctx.font = "9px 'Space Mono', monospace";
+      ctx.fillText(formatPace(maxP - ((maxP - minP) / 4) * i), 0, y + 4);
+    }
+
+    const target = 5 + 40 / 60;
+    if (target >= minP && target <= maxP) {
+      const targetY = toY(target);
+      ctx.strokeStyle = '#c8ff0033';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, targetY);
+      ctx.lineTo(width - padRight, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#c8ff0055';
+      ctx.font = "8px 'Space Mono', monospace";
+      ctx.fillText('TARGET', width - padRight - 46, targetY - 3);
+    }
+
+    ctx.strokeStyle = '#c8ff00';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    runs.forEach((run, index) => {
+      if (index === 0) {
+        ctx.moveTo(toX(index), toY(run.paceTotal));
+      } else {
+        ctx.lineTo(toX(index), toY(run.paceTotal));
+      }
+    });
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    runs.forEach((run, index) => {
+      const x = toX(index);
+      const y = toY(run.paceTotal);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#c8ff00';
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#555';
+      ctx.font = "8px 'Space Mono', monospace";
+      ctx.fillText(new Date(run.date + 'T12:00:00').getDate() + '/4', x, height - 6);
+    });
+    ctx.textAlign = 'left';
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
+  renderDiary();
+</script>
+</body>
+</html>
