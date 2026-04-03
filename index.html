@@ -898,6 +898,18 @@
         </div>
       </div>
       <div class="form-row">
+        <div class="fg"><label>Perche' e' andata cosi'?</label>
+          <select id="inp-context">
+            <option value="strong" selected>✅ Giornata buona — stavo bene</option>
+            <option value="tired">😴 Stanchezza generale</option>
+            <option value="gym">🏋️ Gambe pesanti da palestra</option>
+            <option value="sleep">🛌 Poco recupero / poco sonno</option>
+            <option value="stress">🧠 Stress o poca energia mentale</option>
+            <option value="pain">⚠️ Fastidio fisico / ginocchio</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
         <div class="fg"><label>Note (opzionale)</label><textarea id="inp-note" placeholder="es. gambe pesanti, ginocchio ok, vento forte..."></textarea></div>
       </div>
       <button class="btn-log" onclick="logRun()">SALVA CORSA</button>
@@ -1194,12 +1206,16 @@
       const actualSec = Math.round(run.paceTotal * 60);
       const missBy = actualSec - item.targetSec;
       const feltHeavy = run.feel === 'hard' || run.feel === 'ok';
-      if (missBy > 12 || (feltHeavy && missBy > 5)) {
+      const context = run.context || 'strong';
+      const contextSensitive = context === 'tired' || context === 'gym' || context === 'sleep' || context === 'stress' || context === 'pain';
+      if (missBy > 12 || (feltHeavy && missBy > 5) || (contextSensitive && missBy > 0)) {
+        const strongRecoveryContext = context === 'pain' || context === 'sleep';
         triggers.push({
           afterIndex: item.index,
-          remaining: 2,
-          paceDelta: missBy > 20 || run.feel === 'hard' ? 15 : 10,
-          distanceDelta: 1
+          remaining: strongRecoveryContext ? 3 : 2,
+          paceDelta: strongRecoveryContext ? 20 : (missBy > 20 || run.feel === 'hard' ? 15 : 10),
+          distanceDelta: strongRecoveryContext ? 2 : 1,
+          context
         });
       }
     });
@@ -1263,7 +1279,7 @@
           const distanceText = item.adaptiveDistance !== item.distance
             ? ' Distanza consigliata adattata a ' + item.adaptiveDistance + ' km.'
             : '';
-          adaptNote.textContent = 'Piano adattato automaticamente: prossima corsa piu morbida, target indicativo ' + easierPace + '/km.' + distanceText;
+          adaptNote.textContent = 'Piano adattato automaticamente in base alle ultime sensazioni: prossima corsa piu morbida, target indicativo ' + easierPace + '/km.' + distanceText;
         } else {
           adaptNote.textContent = '';
         }
@@ -1359,6 +1375,7 @@
     const pm = parseInt(document.getElementById('inp-pm').value, 10);
     const ps = parseInt(document.getElementById('inp-ps').value, 10);
     const feel = document.getElementById('inp-feel').value;
+    const context = document.getElementById('inp-context').value;
     const note = document.getElementById('inp-note').value.trim();
 
     if (!date || Number.isNaN(km) || km <= 0 || Number.isNaN(pm) || Number.isNaN(ps)) {
@@ -1367,7 +1384,7 @@
     }
 
     const paceTotal = pm + ps / 60;
-    const run = { id: Date.now(), date, km, pm, ps, paceTotal, feel, note };
+    const run = { id: Date.now(), date, km, pm, ps, paceTotal, feel, context, note };
     const runs = getRuns();
     runs.push(run);
     runs.sort((a, b) => a.date.localeCompare(b.date));
@@ -1377,6 +1394,7 @@
     document.getElementById('inp-pm').value = '';
     document.getElementById('inp-ps').value = '';
     document.getElementById('inp-note').value = '';
+    document.getElementById('inp-context').value = 'strong';
 
     renderAppState();
     markDone(date);
