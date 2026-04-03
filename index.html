@@ -40,6 +40,15 @@
   .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--accent); line-height: 1; }
   .stat-label { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
   .warning-banner { margin: 16px var(--page-pad-right) 0 var(--page-pad); background: #1a0f00; border: 1px solid var(--accent2); border-left: 4px solid var(--accent2); padding: 12px 14px; border-radius: 4px; font-size: 12px; color: #ffb38a; display: flex; gap: 8px; }
+  .status-panel { margin: 16px var(--page-pad-right) 0 var(--page-pad); background: linear-gradient(135deg, #101f00, #0d0d0d 70%); border: 1px solid #334d00; border-radius: 10px; padding: 16px; }
+  .status-kicker { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .status-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 0.95; margin-bottom: 10px; }
+  .status-copy { font-size: 13px; color: #cfcfcf; line-height: 1.6; }
+  .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+  .status-chip { background: rgba(0, 0, 0, 0.28); border: 1px solid #243400; border-radius: 8px; padding: 12px; }
+  .status-value { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); line-height: 1; }
+  .status-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 1px; color: #83a64b; text-transform: uppercase; margin-top: 4px; }
+  .status-note { margin-top: 12px; background: #0d0d0d; border: 1px solid #242424; border-radius: 8px; padding: 12px; font-size: 12px; color: #a5a5a5; line-height: 1.5; }
 
   .week-nav { display: flex; gap: 8px; padding: 20px var(--page-pad-right) 0 var(--page-pad); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-padding-left: var(--page-pad); }
   .week-nav::-webkit-scrollbar { display: none; }
@@ -140,6 +149,19 @@
   .btn-del:hover { color: var(--accent2); }
   .no-entries { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
 
+  .roadmap-section { padding: 20px var(--page-pad-right) 28px var(--page-pad); }
+  .roadmap-intro { font-size: 13px; color: #c3c3c3; line-height: 1.6; margin-bottom: 18px; }
+  .roadmap-card { background: linear-gradient(180deg, #171717, #0f0f0f); border: 1px solid #272727; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .roadmap-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .roadmap-month { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 0.95; }
+  .roadmap-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--black); background: var(--accent); padding: 5px 8px; border-radius: 2px; }
+  .roadmap-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .roadmap-copy { font-size: 13px; line-height: 1.6; color: #c0c0c0; margin-bottom: 10px; }
+  .roadmap-list { display: grid; gap: 8px; }
+  .roadmap-item { display: flex; gap: 10px; font-size: 13px; line-height: 1.6; color: #b5b5b5; }
+  .roadmap-dot { color: var(--accent); font-weight: 700; }
+  .roadmap-final { border-color: #4d5f00; background: linear-gradient(180deg, #162200, #0d0d0d); }
+
   footer { padding: 28px var(--page-pad-right) calc(28px + env(safe-area-inset-bottom)) var(--page-pad); border-top: 1px solid #1a1a1a; text-align: center; font-size: 10px; color: #333; font-family: 'Space Mono', monospace; letter-spacing: 1px; }
 
   @media (max-width: 480px) {
@@ -158,6 +180,8 @@
     .mc { min-width: calc(50% - 4px); }
     .chart-wrap { height: 180px; }
     .entry-item { padding: 12px 14px; gap: 10px; }
+    .status-grid, .roadmap-meta, .sg { grid-template-columns: 1fr; }
+    .roadmap-top { flex-direction: column; }
   }
 
   @media (max-width: 360px) {
@@ -165,7 +189,6 @@
     .warning-banner { font-size: 11px; }
     .week-btn { letter-spacing: 1px; padding: 7px 12px; }
     .mc { min-width: 100%; }
-    .sg { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -187,8 +210,17 @@
   <span><strong>Ginocchio:</strong> Oggi corri soft a 6'10"-6'20"/km. Se il fastidio aumenta fermati. Ghiaccio dopo.</span>
 </div>
 
+<div class="status-panel" id="statusPanel">
+  <div class="status-kicker">Road To 10K</div>
+  <div class="status-title" id="statusTitle">Caricamento stato attuale...</div>
+  <div class="status-copy" id="statusCopy"></div>
+  <div class="status-grid" id="statusGrid"></div>
+  <div class="status-note" id="statusNote"></div>
+</div>
+
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('piano', this)">📋 Piano</button>
+  <button class="tab-btn" onclick="switchTab('roadmap', this)">🛣️ 10K</button>
   <button class="tab-btn" onclick="switchTab('diario', this)">📊 Progressi</button>
 </div>
 
@@ -503,6 +535,83 @@
   </div>
 </div>
 
+<div class="tab-content" id="tab-roadmap">
+  <div class="roadmap-section">
+    <div class="diary-title">ROADMAP FINO A 10 KM</div>
+    <div class="roadmap-intro">
+      Il percorso parte da aprile con i 5 km, poi allunga gradualmente il fondo in maggio e consolida fino ai 10 km entro fine giugno 2026.
+      L'idea non e' correre forte subito, ma arrivare a 10 km continui in modo sostenibile.
+    </div>
+
+    <div class="roadmap-card">
+      <div class="roadmap-top">
+        <div class="roadmap-month">APRILE 2026</div>
+        <div class="roadmap-badge">Fase 1</div>
+      </div>
+      <div class="roadmap-meta">
+        <div class="mc"><div class="mv">5 KM</div><div class="ml">DISTANZA CHIAVE</div></div>
+        <div class="mc"><div class="mv">5'40"</div><div class="ml">TARGET 5K</div></div>
+        <div class="mc"><div class="mv">Base</div><div class="ml">FOCUS</div></div>
+      </div>
+      <div class="roadmap-copy">Mese di ingresso: regolarita', confidenza sul ritmo e un primo test finale sui 5 km.</div>
+      <div class="roadmap-list">
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>2 uscite a settimana con una corsa facile e una seduta piu' qualitativa.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Obiettivo mese: chiudere 5 km sotto 5'40"/km senza andare fuori giri.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Se il ginocchio resta tranquillo, aprile costruisce la base per salire di distanza.</span></div>
+      </div>
+    </div>
+
+    <div class="roadmap-card">
+      <div class="roadmap-top">
+        <div class="roadmap-month">MAGGIO 2026</div>
+        <div class="roadmap-badge">Fase 2</div>
+      </div>
+      <div class="roadmap-meta">
+        <div class="mc"><div class="mv">6→8 KM</div><div class="ml">USCITA LUNGA</div></div>
+        <div class="mc"><div class="mv">3</div><div class="ml">CORSE / SETT.</div></div>
+        <div class="mc"><div class="mv">Volume</div><div class="ml">FOCUS</div></div>
+      </div>
+      <div class="roadmap-copy">Mese di costruzione. Qui si passa da corridore da 5 km a corridore che regge uscite piu' lunghe senza crollare nel finale.</div>
+      <div class="roadmap-list">
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>1 corsa facile da 5 km, 1 allenamento ritmo/fartlek, 1 fondo lungo nel weekend.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Progressione fondo lungo: 6 km, poi 7 km, poi 8 km.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Checkpoint di fine mese: 8 km continui controllati, senza camminare.</span></div>
+      </div>
+    </div>
+
+    <div class="roadmap-card">
+      <div class="roadmap-top">
+        <div class="roadmap-month">GIUGNO 2026</div>
+        <div class="roadmap-badge">Fase 3</div>
+      </div>
+      <div class="roadmap-meta">
+        <div class="mc"><div class="mv">8→10 KM</div><div class="ml">USCITA LUNGA</div></div>
+        <div class="mc"><div class="mv">Stabile</div><div class="ml">RITMO EASY</div></div>
+        <div class="mc"><div class="mv">Tenuta</div><div class="ml">FOCUS</div></div>
+      </div>
+      <div class="roadmap-copy">Mese di consolidamento. L'obiettivo non e' solo toccare i 10 km, ma arrivarci con una sensazione di controllo e con un finale gestibile.</div>
+      <div class="roadmap-list">
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Fondi lunghi in crescita: 8 km, 9 km e poi 10 km a ritmo facile.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Una seduta a settimana resta piu' brillante per non perdere economia di corsa.</span></div>
+        <div class="roadmap-item"><span class="roadmap-dot">•</span><span>Se senti carico eccessivo, si ripete una settimana prima di salire ancora.</span></div>
+      </div>
+    </div>
+
+    <div class="roadmap-card roadmap-final">
+      <div class="roadmap-top">
+        <div class="roadmap-month">FINE GIUGNO 2026</div>
+        <div class="roadmap-badge">10 KM</div>
+      </div>
+      <div class="roadmap-meta">
+        <div class="mc"><div class="mv">10 KM</div><div class="ml">TEST FINALE</div></div>
+        <div class="mc"><div class="mv">Continui</div><div class="ml">SENZA STOP</div></div>
+        <div class="mc"><div class="mv">Road Goal</div><div class="ml">ARRIVO</div></div>
+      </div>
+      <div class="roadmap-copy">Secondo questo programma, il traguardo realistico per arrivare a 10 km continui e' la fine di giugno 2026, con luglio dedicato eventualmente a renderli piu' comodi o piu' veloci.</div>
+    </div>
+  </div>
+</div>
+
 <div class="tab-content" id="tab-diario">
   <div class="diary-section">
     <div class="diary-title">I TUOI PROGRESSI</div>
@@ -556,12 +665,37 @@
 </div>
 
 <footer>
-  PIANO PERSONALIZZATO · APRILE 2026 · MONTESILVANO / PESCARA<br>
-  <span style="color:#333;margin-top:4px;display:block">OBIETTIVO FINALE: 10 KM</span>
+  ROAD TO 10 KM · APRILE-GIUGNO 2026 · MONTESILVANO / PESCARA<br>
+  <span style="color:#333;margin-top:4px;display:block">OBIETTIVO FINALE: 10 KM CONTINUI</span>
 </footer>
 
 <script>
   const KEY = 'runs_apr2026';
+  const APRIL_PLAN = [
+    { date: '2026-04-03', label: 'Corsa di ingresso', type: 'run', distance: 4, phase: 'Ingresso' },
+    { date: '2026-04-05', label: 'Corsa baseline 5 km', type: 'run', distance: 5, phase: 'Ingresso' },
+    { date: '2026-04-06', label: 'Palestra', type: 'gym', distance: 0, phase: 'Base' },
+    { date: '2026-04-07', label: 'Corsa base post-palestra', type: 'run', distance: 5, phase: 'Base' },
+    { date: '2026-04-11', label: 'Variazioni 5 km', type: 'run', distance: 5, phase: 'Base' },
+    { date: '2026-04-14', label: 'Fartlek leggero', type: 'run', distance: 5, phase: 'Passo' },
+    { date: '2026-04-17', label: '5 km costanti', type: 'run', distance: 5, phase: 'Passo' },
+    { date: '2026-04-21', label: 'Recupero attivo', type: 'run', distance: 4.5, phase: 'Consolidamento' },
+    { date: '2026-04-24', label: 'Progressivo 5 km', type: 'run', distance: 5, phase: 'Consolidamento' },
+    { date: '2026-04-28', label: 'Corsa base consolidata', type: 'run', distance: 5, phase: 'Test' },
+    { date: '2026-04-30', label: 'Test finale 5 km', type: 'run', distance: 5, phase: 'Test' }
+  ];
+  const MONTH_PHASES = [
+    { start: '2026-04-01', end: '2026-04-05', title: 'Ingresso', copy: 'Stai entrando nel piano e stai testando il ginocchio con carichi controllati.' },
+    { start: '2026-04-06', end: '2026-04-12', title: 'Costruzione base', copy: 'Stai consolidando il ritmo sui 5 km e la regolarita\'.' },
+    { start: '2026-04-13', end: '2026-04-19', title: 'Lavoro sul passo', copy: 'Stai iniziando a spingere un po\' di piu\' con variazioni e fartlek.' },
+    { start: '2026-04-20', end: '2026-04-26', title: 'Consolidamento', copy: 'Stai stabilizzando i progressi e preparando il finale di mese.' },
+    { start: '2026-04-27', end: '2026-04-30', title: 'Test finale', copy: 'Sei nell\'ultima fase di aprile, quella che misura il miglioramento sui 5 km.' }
+  ];
+  const ROADMAP_STEPS = [
+    { until: '2026-04-30', label: 'Fase 1 di 3', detail: 'Costruzione 5 km' },
+    { until: '2026-05-31', label: 'Fase 2 di 3', detail: 'Salita verso 8 km' },
+    { until: '2026-06-30', label: 'Fase 3 di 3', detail: 'Consolidamento fino a 10 km' }
+  ];
 
   function getRuns() {
     try {
@@ -597,6 +731,58 @@
   }
 
   document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
+
+  function formatPace(value) {
+    const minutes = Math.floor(value);
+    const seconds = Math.round((value - minutes) * 60).toString().padStart(2, '0');
+    return minutes + "'" + seconds + '"';
+  }
+
+  function formatDateLabel(dateStr) {
+    const date = new Date(dateStr + 'T12:00:00');
+    return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+  }
+
+  function getCurrentPhase(todayStr) {
+    return MONTH_PHASES.find((phase) => todayStr >= phase.start && todayStr <= phase.end) || MONTH_PHASES[MONTH_PHASES.length - 1];
+  }
+
+  function getRoadmapStep(todayStr) {
+    return ROADMAP_STEPS.find((step) => todayStr <= step.until) || ROADMAP_STEPS[ROADMAP_STEPS.length - 1];
+  }
+
+  function renderCurrentStatus() {
+    const runs = getRuns();
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const runDates = new Set(runs.map((run) => run.date));
+    const plannedRuns = APRIL_PLAN.filter((item) => item.type === 'run');
+    const dueRuns = plannedRuns.filter((item) => item.date <= todayStr);
+    const completedDueRuns = dueRuns.filter((item) => runDates.has(item.date)).length;
+    const totalPlannedCompleted = plannedRuns.filter((item) => runDates.has(item.date)).length;
+    const nextPlannedRun = plannedRuns.find((item) => item.date >= todayStr && !runDates.has(item.date))
+      || plannedRuns.find((item) => !runDates.has(item.date));
+    const longestRun = runs.length ? Math.max(...runs.map((run) => run.km)) : 0;
+    const bestPace = runs.length ? Math.min(...runs.map((run) => run.paceTotal)) : null;
+    const currentPhase = getCurrentPhase(todayStr);
+    const roadmapStep = getRoadmapStep(todayStr);
+    const completedText = dueRuns.length ? completedDueRuns + '/' + dueRuns.length : '0/0';
+    const phaseText = roadmapStep.label + ' · ' + roadmapStep.detail;
+    const nextText = nextPlannedRun ? formatDateLabel(nextPlannedRun.date) + ' · ' + nextPlannedRun.label : 'Aprile completato';
+    const distanceText = longestRun ? longestRun.toFixed(longestRun % 1 === 0 ? 0 : 1) + ' km' : '0 km';
+
+    document.getElementById('statusTitle').textContent = currentPhase.title + ' · punto attuale';
+    document.getElementById('statusCopy').textContent = currentPhase.copy;
+    document.getElementById('statusGrid').innerHTML = `
+      <div class="status-chip"><div class="status-value">${completedText}</div><div class="status-label">Sessioni previste gia' completate</div></div>
+      <div class="status-chip"><div class="status-value">${distanceText}</div><div class="status-label">Distanza massima registrata</div></div>
+      <div class="status-chip"><div class="status-value">${phaseText}</div><div class="status-label">Roadmap verso 10 km</div></div>
+      <div class="status-chip"><div class="status-value">${bestPace ? formatPace(bestPace) : '--'}</div><div class="status-label">Miglior passo registrato</div></div>
+    `;
+    document.getElementById('statusNote').textContent =
+      'Prossimo riferimento: ' + nextText + '. Hai registrato ' + runs.length + ' corse totali, di cui ' +
+      totalPlannedCompleted + ' coincidono con le sessioni del piano di aprile. Traguardo stimato 10 km: fine giugno 2026.';
+  }
 
   function markDone(dateStr) {
     const date = new Date(dateStr + 'T12:00:00');
@@ -636,7 +822,7 @@
     document.getElementById('inp-ps').value = '';
     document.getElementById('inp-note').value = '';
 
-    renderDiary();
+    renderAppState();
     markDone(date);
   }
 
@@ -644,7 +830,7 @@
     event.stopPropagation();
     if (!confirm('Eliminare questa corsa?')) return;
     saveRuns(getRuns().filter((run) => run.id !== id));
-    renderDiary();
+    renderAppState();
   }
 
   function renderDiary() {
@@ -658,11 +844,6 @@
       const avgPace = runs.reduce((sum, run) => sum + run.paceTotal, 0) / runs.length;
       const bestPace = Math.min(...runs.map((run) => run.paceTotal));
       const improvement = runs.length > 1 ? runs[0].paceTotal - runs[runs.length - 1].paceTotal : 0;
-      const formatPace = (value) => {
-        const minutes = Math.floor(value);
-        const seconds = Math.round((value - minutes) * 60).toString().padStart(2, '0');
-        return minutes + "'" + seconds + '"';
-      };
       const trendHTML = runs.length > 1
         ? improvement > 0
           ? '<div class="trend-up">▲ ' + Math.round(improvement * 60) + 's migliorato</div>'
@@ -752,12 +933,6 @@
     const chartHeight = height - padTop - padBottom;
     const toY = (value) => padTop + chartHeight * (1 - (value - minP) / (maxP - minP));
     const toX = (index) => padLeft + (chartWidth / Math.max(runs.length - 1, 1)) * index;
-    const formatPace = (value) => {
-      const minutes = Math.floor(value);
-      const seconds = Math.round((value - minutes) * 60).toString().padStart(2, '0');
-      return minutes + "'" + seconds + '"';
-    };
-
     for (let i = 0; i <= 4; i += 1) {
       const y = padTop + (chartHeight / 4) * i;
       ctx.strokeStyle = '#1e1e1e';
@@ -819,13 +994,18 @@
     ctx.textAlign = 'left';
   }
 
+  function renderAppState() {
+    renderCurrentStatus();
+    renderDiary();
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     });
   }
 
-  renderDiary();
+  renderAppState();
 </script>
 </body>
 </html>
