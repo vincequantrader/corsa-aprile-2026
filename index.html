@@ -984,6 +984,45 @@
     { until: '2026-05-31', label: 'Fase 2 di 3', detail: 'Salita verso 8 km' },
     { until: '2026-06-30', label: 'Fase 3 di 3', detail: 'Consolidamento fino a 10 km' }
   ];
+  const INACTIVE_CARD_IDS = new Set([
+    'sc-5-2',
+    'sc-6-2',
+    'sc-7-2',
+    'sc-8-2',
+    'sc-9-2',
+    'sc-10-2',
+    'sc-11-2',
+    'sc-12-2'
+  ]);
+  const TARGET_PACES = {
+    'sc-3': 375,
+    'sc-5': 360,
+    'sc-7': 360,
+    'sc-11': 350,
+    'sc-14': 345,
+    'sc-17': 350,
+    'sc-21': 375,
+    'sc-24': 340,
+    'sc-28': 340,
+    'sc-30': 340,
+    'sc-5-1': 360,
+    'sc-5-3': 370,
+    'sc-6-1': 370,
+    'sc-6-3': 370,
+    'sc-7-1': 350,
+    'sc-7-3': 365,
+    'sc-8-1': 375,
+    'sc-8-3': 365,
+    'sc-9-1': 375,
+    'sc-9-3': 370,
+    'sc-10-1': 350,
+    'sc-10-3': 365,
+    'sc-11-1': 375,
+    'sc-11-3': 370,
+    'sc-12-1': 380,
+    'sc-12-3': 365,
+    'sc-13-1': 380
+  };
 
   function getRuns() {
     try {
@@ -1069,6 +1108,8 @@
       const delay = adjustments.filter((index) => index <= item.index).length;
       return {
         ...item,
+        active: !INACTIVE_CARD_IDS.has(item.cardId),
+        targetSec: TARGET_PACES[item.cardId] || null,
         delay,
         effectiveDate: addDays(item.date, delay)
       };
@@ -1098,9 +1139,17 @@
     });
   }
 
+  function applyAvailabilityConstraints() {
+    getEffectivePlan().forEach((item) => {
+      const card = document.getElementById(item.cardId);
+      if (!card) return;
+      card.style.display = item.active ? '' : 'none';
+    });
+  }
+
   function updateWeekHeaders(effectivePlan) {
     WEEK_META.forEach((week, sectionIndex) => {
-      const items = effectivePlan.filter((item) => item.section === sectionIndex);
+      const items = effectivePlan.filter((item) => item.section === sectionIndex && item.active);
       const header = document.querySelector('#' + week.sectionId + ' .week-header');
       if (!header || !items.length) return;
       header.textContent = formatRangeLabel(items[0].effectiveDate, items[items.length - 1].effectiveDate) + ' · ' + week.label;
@@ -1121,8 +1170,12 @@
       const shiftNote = document.createElement('div');
       shiftNote.className = 'session-shift-note';
       shiftNote.id = 'shift-note-' + item.index;
+      const adaptNote = document.createElement('div');
+      adaptNote.className = 'session-adapt-note';
+      adaptNote.id = 'adapt-note-' + item.index;
       detail.appendChild(actions);
       detail.appendChild(shiftNote);
+      detail.appendChild(adaptNote);
       actions.querySelector('button').addEventListener('click', (event) => {
         event.stopPropagation();
         postponeSession(item.index);
@@ -1130,8 +1183,56 @@
     });
   }
 
+  function buildAdaptivePlan(effectivePlan, runs) {
+    const runByDate = new Map(runs.map((run) => [run.date, run]));
+    const triggers = [];
+
+    effectivePlan.forEach((item) => {
+      if (!item.active || item.type !== 'run' || !item.targetSec) return;
+      const run = runByDate.get(item.effectiveDate);
+      if (!run) return;
+      const actualSec = Math.round(run.paceTotal * 60);
+      const missBy = actualSec - item.targetSec;
+      const feltHeavy = run.feel === 'hard' || run.feel === 'ok';
+      if (missBy > 12 || (feltHeavy && missBy > 5)) {
+        triggers.push({
+          afterIndex: item.index,
+          remaining: 2,
+          paceDelta: missBy > 20 || run.feel === 'hard' ? 15 : 10,
+          distanceDelta: 1
+        });
+      }
+    });
+
+    return effectivePlan.map((item) => {
+      if (!item.active || item.type !== 'run') {
+        return { ...item, adaptivePaceDelta: 0, adaptiveDistance: item.distance };
+      }
+
+      let paceDelta = 0;
+      let adaptiveDistance = item.distance;
+
+      triggers.forEach((trigger) => {
+        if (trigger.remaining > 0 && item.index > trigger.afterIndex && !runByDate.has(item.effectiveDate)) {
+          paceDelta = Math.max(paceDelta, trigger.paceDelta);
+          if (item.distance >= 8) {
+            adaptiveDistance = Math.max(item.distance - trigger.distanceDelta, 5);
+          }
+          trigger.remaining -= 1;
+        }
+      });
+
+      return {
+        ...item,
+        adaptivePaceDelta: paceDelta,
+        adaptiveDistance
+      };
+    });
+  }
+
   function applyScheduleToUI() {
-    const effectivePlan = getEffectivePlan();
+    const runs = getRuns();
+    const effectivePlan = buildAdaptivePlan(getEffectivePlan(), runs);
 
     effectivePlan.forEach((item) => {
       const card = document.getElementById(item.cardId);
@@ -1141,6 +1242,7 @@
       const monthBox = card.querySelector('.session-date .ms');
       const dayBox = card.querySelector('.session-day');
       const shiftNote = document.getElementById('shift-note-' + item.index);
+      const adaptNote = document.getElementById('adapt-note-' + item.index);
 
       if (dateBox && dateBox.childNodes.length) {
         dateBox.childNodes[0].textContent = String(dateParts.dayNumber);
@@ -1154,6 +1256,17 @@
         shiftNote.textContent = item.delay > 0
           ? 'Calendario spostato di +' + item.delay + ' giorno' + (item.delay > 1 ? 'i' : '') + ' per questa sessione.'
           : '';
+      }
+      if (adaptNote) {
+        if (item.adaptivePaceDelta > 0) {
+          const easierPace = item.targetSec ? formatPace((item.targetSec + item.adaptivePaceDelta) / 60) : '--';
+          const distanceText = item.adaptiveDistance !== item.distance
+            ? ' Distanza consigliata adattata a ' + item.adaptiveDistance + ' km.'
+            : '';
+          adaptNote.textContent = 'Piano adattato automaticamente: prossima corsa piu morbida, target indicativo ' + easierPace + '/km.' + distanceText;
+        } else {
+          adaptNote.textContent = '';
+        }
       }
     });
 
@@ -1190,11 +1303,11 @@
 
   function renderCurrentStatus() {
     const runs = getRuns();
-    const effectivePlan = getEffectivePlan();
+    const effectivePlan = buildAdaptivePlan(getEffectivePlan(), runs);
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const runDates = new Set(runs.map((run) => run.date));
-    const plannedRuns = effectivePlan.filter((item) => item.type === 'run');
+    const plannedRuns = effectivePlan.filter((item) => item.type === 'run' && item.active);
     const dueRuns = plannedRuns.filter((item) => item.effectiveDate <= todayStr);
     const completedDueRuns = dueRuns.filter((item) => runDates.has(item.effectiveDate)).length;
     const totalPlannedCompleted = plannedRuns.filter((item) => runDates.has(item.effectiveDate)).length;
@@ -1221,7 +1334,7 @@
     document.getElementById('statusNote').textContent =
       'Prossimo riferimento: ' + nextText + '. Hai registrato ' + runs.length + ' corse totali, di cui ' +
       totalPlannedCompleted + ' coincidono con le sessioni del piano del trimestre. Calendario spostato finora di ' +
-      totalDelay + ' giorno' + (totalDelay === 1 ? '' : 'i') + '. Traguardo stimato 10 km: fine giugno 2026.';
+      totalDelay + ' giorno' + (totalDelay === 1 ? '' : 'i') + '. Il piano considera massimo 2 corse a settimana. Traguardo stimato 10 km: fine giugno 2026.';
     document.getElementById('statusActions').innerHTML = `
       <button class="action-btn primary" type="button" onclick="undoLastShift()" ${totalDelay === 0 ? 'disabled' : ''}>Annulla ultimo slittamento</button>
       <button class="action-btn warn" type="button" onclick="resetSchedule()" ${totalDelay === 0 ? 'disabled' : ''}>Reset calendario</button>
@@ -1441,6 +1554,7 @@
 
   function renderAppState() {
     injectPlanActions();
+    applyAvailabilityConstraints();
     applyScheduleToUI();
     renderCurrentStatus();
     renderDiary();

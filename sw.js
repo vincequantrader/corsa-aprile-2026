@@ -1,4 +1,4 @@
-const CACHE_NAME = 'corsa-aprile-2026-v3';
+const CACHE_NAME = 'corsa-aprile-2026-v4';
 const ASSETS = [
   './',
   './index.html',
