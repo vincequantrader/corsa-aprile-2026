@@ -1206,6 +1206,44 @@ function renderAll() {
 // Set date input default
 document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
 
+// ═══════════════════════════════════════════
+// STORICO PREGRESSO (gen–mag 2026)
+// ═══════════════════════════════════════════
+const STORICO = [
+  { id:1001, date:'2026-01-02', km:7.23, pm:6, ps:53, paceTotal:6+53/60, feel:'ok', note:'Prima uscita dell\'anno' },
+  { id:1002, date:'2026-01-13', km:6.12, pm:6, ps:20, paceTotal:6+20/60, feel:'good', note:'' },
+  { id:1003, date:'2026-01-18', km:6.56, pm:6, ps:17, paceTotal:6+17/60, feel:'good', note:'' },
+  { id:1004, date:'2026-01-23', km:6.27, pm:6, ps:24, paceTotal:6+24/60, feel:'ok', note:'' },
+  { id:1005, date:'2026-01-27', km:4.42, pm:5, ps:51, paceTotal:5+51/60, feel:'great', note:'' },
+  { id:1006, date:'2026-02-02', km:5.75, pm:6, ps:3,  paceTotal:6+3/60,  feel:'good', note:'' },
+  { id:1007, date:'2026-02-08', km:6.67, pm:6, ps:2,  paceTotal:6+2/60,  feel:'good', note:'' },
+  { id:1008, date:'2026-02-22', km:6.54, pm:6, ps:7,  paceTotal:6+7/60,  feel:'good', note:'' },
+  { id:1009, date:'2026-02-25', km:5.65, pm:6, ps:12, paceTotal:6+12/60, feel:'ok', note:'' },
+  { id:1010, date:'2026-03-01', km:6.75, pm:5, ps:54, paceTotal:5+54/60, feel:'good', note:'' },
+  { id:1011, date:'2026-03-04', km:4.87, pm:6, ps:10, paceTotal:6+10/60, feel:'ok', note:'' },
+  { id:1012, date:'2026-03-14', km:5.26, pm:5, ps:54, paceTotal:5+54/60, feel:'good', note:'' },
+  { id:1013, date:'2026-03-17', km:6.16, pm:5, ps:50, paceTotal:5+50/60, feel:'great', note:'' },
+  { id:1014, date:'2026-03-23', km:6.37, pm:5, ps:56, paceTotal:5+56/60, feel:'good', note:'' },
+  { id:1015, date:'2026-04-03', km:4.00, pm:6, ps:7,  paceTotal:6+7/60,  feel:'ok', note:'Rientro cauto' },
+  { id:1016, date:'2026-04-04', km:5.00, pm:5, ps:50, paceTotal:5+50/60, feel:'good', note:'' },
+  { id:1017, date:'2026-04-07', km:5.00, pm:5, ps:54, paceTotal:5+54/60, feel:'good', note:'' },
+  { id:1018, date:'2026-04-11', km:5.00, pm:5, ps:47, paceTotal:5+47/60, feel:'good', note:'' },
+  { id:1019, date:'2026-04-18', km:4.47, pm:5, ps:47, paceTotal:5+47/60, feel:'ok', note:'' },
+  { id:1020, date:'2026-04-19', km:5.00, pm:5, ps:49, paceTotal:5+49/60, feel:'good', note:'' },
+  { id:1021, date:'2026-04-24', km:4.51, pm:6, ps:14, paceTotal:6+14/60, feel:'hard', note:'Giornata no' },
+  { id:1022, date:'2026-04-26', km:5.00, pm:5, ps:33, paceTotal:5+33/60, feel:'great', note:'Miglior passo!' },
+  { id:1023, date:'2026-05-02', km:5.00, pm:5, ps:38, paceTotal:5+38/60, feel:'great', note:'' },
+  { id:1024, date:'2026-05-03', km:5.06, pm:5, ps:41, paceTotal:5+41/60, feel:'good', note:'' },
+  { id:1025, date:'2026-05-09', km:5.00, pm:5, ps:54, paceTotal:5+54/60, feel:'ok', note:'' }
+];
+
+function seedStorico() {
+  const existing = getRuns();
+  if (existing.length === 0) {
+    localStorage.setItem(KEY_RUNS, JSON.stringify(STORICO));
+  }
+}
+
 // Auto-select first non-done week
 function initCurrentWeek() {
   const done = getDone();
@@ -1217,6 +1255,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
 
+seedStorico();
 initCurrentWeek();
 renderAll();
 syncFromGist();
