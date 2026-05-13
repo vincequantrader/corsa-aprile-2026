@@ -199,6 +199,31 @@
     .week-btn { letter-spacing: 1px; padding: 7px 12px; }
     .mc { min-width: 100%; }
   }
+
+  /* ── SYNC ── */
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+  .sync-ok { background: var(--accent); }
+  .sync-error { background: var(--accent2); }
+  .sync-syncing { background: #ffcf00; animation: pulse 0.8s infinite; }
+  .sync-off { background: #444; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .sync-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; align-items: flex-end; justify-content: center; }
+  .sync-modal { background: #131313; border: 1px solid #2a2a2a; border-radius: 16px 16px 0 0; width: 100%; max-width: 560px; padding: 28px 24px calc(28px + env(safe-area-inset-bottom)); }
+  .sync-modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; margin-bottom: 4px; }
+  .sync-modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+  .sync-field { margin-bottom: 16px; }
+  .sync-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+  .sync-input { width: 100%; background: #0d0d0d; border: 1px solid #333; border-radius: 6px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+  .sync-input:focus { border-color: var(--accent); }
+  .sync-gist-id { font-family: 'Space Mono', monospace; font-size: 10px; color: #555; margin-top: 4px; word-break: break-all; }
+  .sync-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .sync-btn { flex: 1; min-height: 48px; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: var(--white); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+  .sync-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--black); font-weight: 700; }
+  .sync-btn.danger { border-color: #5a1a1a; color: #ff7070; }
+  .sync-step { background: #0d1a00; border: 1px solid #2a4000; border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 12px; color: #a8d060; line-height: 1.7; }
+  .sync-step a { color: var(--accent); }
+  .sync-status-bar { display: flex; align-items: center; font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -232,6 +257,7 @@
   <button class="tab-btn active" onclick="switchTab('piano', this)">📋 Piano</button>
   <button class="tab-btn" onclick="switchTab('roadmap', this)">🛣️ 10K</button>
   <button class="tab-btn" onclick="switchTab('diario', this)">📊 Progressi</button>
+  <button class="tab-btn" onclick="showSyncModal()" id="sync-tab-btn" style="display:flex;align-items:center;justify-content:center;gap:4px"><span class="sync-dot sync-off" id="sync-status-dot"></span>☁️</button>
 </div>
 
 <div class="tab-content active" id="tab-piano">
@@ -1218,11 +1244,170 @@
 <footer>
   ROAD TO 10 KM · APRILE-GIUGNO 2026 · MONTESILVANO / PESCARA<br>
   <span style="color:#333;margin-top:4px;display:block">OBIETTIVO FINALE: 10 KM CONTINUI</span>
+  <div class="sync-status-bar" style="justify-content:center;margin-top:12px"><span class="sync-dot sync-off" id="sync-status-dot2"></span><span id="sync-status-txt">Sync non configurato</span></div>
 </footer>
+
+<!-- SYNC MODAL -->
+<div class="sync-modal-overlay" id="sync-modal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="sync-modal">
+    <div class="sync-modal-title">☁️ Sync GitHub</div>
+    <div class="sync-modal-sub">I tuoi dati vengono salvati su un Gist privato GitHub e sincronizzati automaticamente tra iPhone e Mac.</div>
+
+    <div class="sync-step" id="sync-howto">
+      <strong style="color:var(--accent)">Come configurare (1 volta sola):</strong><br>
+      1. Vai su <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
+      2. Nome: <em>Road To 10K</em> · Scadenza: <em>No expiration</em><br>
+      3. Spunta solo <strong>gist</strong> nei permessi<br>
+      4. Copia il token e incollalo qui sotto
+    </div>
+
+    <div class="sync-field">
+      <label class="sync-label">Personal Access Token GitHub</label>
+      <input class="sync-input" type="password" id="sync-token-input" placeholder="ghp_xxxxxxxxxxxxxxxx" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+
+    <div class="sync-field">
+      <label class="sync-label">Gist ID (generato automaticamente)</label>
+      <div class="sync-gist-id" id="sync-gist-id">(verrà creato al primo salvataggio)</div>
+    </div>
+
+    <div class="sync-actions">
+      <button class="sync-btn primary" onclick="saveSyncSettings()">SALVA E SINCRONIZZA</button>
+      <button class="sync-btn" onclick="closeSyncModal()">CHIUDI</button>
+    </div>
+    <div style="margin-top:10px">
+      <button class="sync-btn danger" onclick="disconnectSync()" style="width:100%;margin-top:0" id="sync-disconnect-btn">Disconnetti sync</button>
+    </div>
+  </div>
+</div>
 
 <script>
   const KEY = 'runs_apr2026';
   const SCHEDULE_KEY = 'runs_apr2026_schedule';
+  const GIST_TOKEN_KEY = 'gist_token_r10k';
+  const GIST_ID_KEY = 'gist_id_r10k';
+  const GIST_FILENAME = 'road-to-10k-data.json';
+  let syncTimer = null;
+
+  function setSyncStatus(status, msg) {
+    ['sync-status-dot','sync-status-dot2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.className = 'sync-dot sync-' + status; }
+    });
+    const txt = document.getElementById('sync-status-txt');
+    if (txt && msg !== undefined) txt.textContent = msg;
+  }
+
+  async function syncToGist() {
+    const token = localStorage.getItem(GIST_TOKEN_KEY);
+    if (!token) return;
+    const gistId = localStorage.getItem(GIST_ID_KEY);
+    const data = {
+      runs: JSON.parse(localStorage.getItem(KEY) || '[]'),
+      schedule: JSON.parse(localStorage.getItem(SCHEDULE_KEY) || '{"adjustments":[]}'),
+      lastUpdated: new Date().toISOString()
+    };
+    try {
+      setSyncStatus('syncing', 'Sincronizzazione...');
+      if (!gistId) {
+        const res = await fetch('https://api.github.com/gists', {
+          method: 'POST',
+          headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            description: 'Road To 10K 2026 — Dati Corsa',
+            public: false,
+            files: { [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } }
+          })
+        });
+        if (!res.ok) throw new Error('Creazione Gist fallita: ' + res.status);
+        const gist = await res.json();
+        localStorage.setItem(GIST_ID_KEY, gist.id);
+        const el = document.getElementById('sync-gist-id');
+        if (el) el.textContent = gist.id;
+      } else {
+        const res = await fetch('https://api.github.com/gists/' + gistId, {
+          method: 'PATCH',
+          headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: { [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) } } })
+        });
+        if (!res.ok) throw new Error('Aggiornamento Gist fallito: ' + res.status);
+      }
+      const now = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      setSyncStatus('ok', 'Sincronizzato alle ' + now);
+    } catch (err) {
+      setSyncStatus('error', 'Errore: ' + err.message);
+      console.error('syncToGist:', err);
+    }
+  }
+
+  async function syncFromGist() {
+    const token = localStorage.getItem(GIST_TOKEN_KEY);
+    const gistId = localStorage.getItem(GIST_ID_KEY);
+    if (!token || !gistId) {
+      setSyncStatus('off', 'Sync non configurato — tocca ☁️');
+      return;
+    }
+    try {
+      setSyncStatus('syncing', 'Caricamento dati...');
+      const res = await fetch('https://api.github.com/gists/' + gistId, {
+        headers: { 'Authorization': 'token ' + token }
+      });
+      if (!res.ok) throw new Error('Lettura Gist fallita: ' + res.status);
+      const gist = await res.json();
+      const content = gist.files[GIST_FILENAME] && gist.files[GIST_FILENAME].content;
+      if (!content) { setSyncStatus('ok', 'Nessun dato remoto ancora'); return; }
+      const remote = JSON.parse(content);
+      if (remote.runs) localStorage.setItem(KEY, JSON.stringify(remote.runs));
+      if (remote.schedule) localStorage.setItem(SCHEDULE_KEY, JSON.stringify(remote.schedule));
+      const now = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      setSyncStatus('ok', 'Sincronizzato alle ' + now);
+      renderAppState();
+    } catch (err) {
+      setSyncStatus('error', 'Offline / errore token');
+      console.error('syncFromGist:', err);
+    }
+  }
+
+  function scheduleSyncToGist() {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncToGist, 1500);
+  }
+
+  function showSyncModal() {
+    const token = localStorage.getItem(GIST_TOKEN_KEY) || '';
+    const gistId = localStorage.getItem(GIST_ID_KEY) || '';
+    const inp = document.getElementById('sync-token-input');
+    const gidEl = document.getElementById('sync-gist-id');
+    const howto = document.getElementById('sync-howto');
+    const disconnBtn = document.getElementById('sync-disconnect-btn');
+    if (inp) inp.value = token;
+    if (gidEl) gidEl.textContent = gistId || '(verrà creato al primo salvataggio)';
+    if (howto) howto.style.display = token ? 'none' : 'block';
+    if (disconnBtn) disconnBtn.style.display = token ? 'block' : 'none';
+    document.getElementById('sync-modal').style.display = 'flex';
+  }
+
+  function closeSyncModal() {
+    document.getElementById('sync-modal').style.display = 'none';
+  }
+
+  function saveSyncSettings() {
+    const token = document.getElementById('sync-token-input').value.trim();
+    if (!token) { alert('Inserisci il token GitHub!'); return; }
+    const oldToken = localStorage.getItem(GIST_TOKEN_KEY);
+    localStorage.setItem(GIST_TOKEN_KEY, token);
+    if (token !== oldToken) localStorage.removeItem(GIST_ID_KEY);
+    closeSyncModal();
+    syncFromGist();
+  }
+
+  function disconnectSync() {
+    if (!confirm('Disconnettere la sincronizzazione?\nI dati locali sul telefono e sul Mac rimarranno intatti.')) return;
+    localStorage.removeItem(GIST_TOKEN_KEY);
+    localStorage.removeItem(GIST_ID_KEY);
+    setSyncStatus('off', 'Sync non configurato — tocca ☁️');
+    closeSyncModal();
+  }
   const TRAINING_PLAN = [
     { index: 0, cardId: 'sc-3', badgeId: 'b-3', date: '2026-04-03', label: 'Corsa di ingresso', type: 'run', distance: 4, phase: 'Ingresso', section: 0, badgeText: 'CAUTO', badgeClass: 'badge b-caution' },
     { index: 1, cardId: 'sc-5', badgeId: 'b-5', date: '2026-04-05', label: 'Corsa baseline 5 km', type: 'run', distance: 5, phase: 'Ingresso', section: 0, badgeText: 'CORSA', badgeClass: 'badge b-run' },
@@ -1341,6 +1526,7 @@
 
   function saveRuns(runs) {
     localStorage.setItem(KEY, JSON.stringify(runs));
+    scheduleSyncToGist();
   }
 
   function getScheduleState() {
@@ -1355,6 +1541,7 @@
 
   function saveScheduleState(state) {
     localStorage.setItem(SCHEDULE_KEY, JSON.stringify(state));
+    scheduleSyncToGist();
   }
 
   function switchTab(name, btn) {
@@ -1880,6 +2067,7 @@
   }
 
   renderAppState();
+  syncFromGist();
 </script>
 </body>
 </html>
