@@ -1,7 +1,7 @@
 {
-  "name": "Programma Corsa Aprile 2026",
-  "short_name": "Corsa Aprile",
-  "description": "Piano corsa e diario progressi per aprile 2026.",
+  "name": "Road To 10K — Stagione 2",
+  "short_name": "Road 10K",
+  "description": "Piano allenamento corsa verso i 10km — Stagione 2026",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a0a0a",
